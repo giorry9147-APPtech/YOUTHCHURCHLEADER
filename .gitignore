@@ -48,4 +48,11 @@ next-env.d.ts
 .tunnel.log
 *.log
 
+# Firebase admin credentials — NEVER COMMIT
+service-account.json
+*-firebase-adminsdk-*.json
+serviceAccount*.json
+
 .vercel
+
+.env*.local

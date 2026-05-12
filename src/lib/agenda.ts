@@ -1,64 +1,71 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  type DocumentData,
-} from "firebase/firestore";
-import { getDb } from "@/lib/firebase";
+"use server";
+
+import { sql } from "@/lib/db";
 
 export type AgendaType = "meeting" | "service" | "social" | "personal";
 
 export type AgendaItem = {
   id: string;
   title: string;
-  date: string; // YYYY-MM-DD
-  time: string; // HH:MM
-  duration: number; // minutes
+  date: string;
+  time: string;
+  duration: number;
   type: AgendaType;
   attendees: string[];
   location?: string;
   notes?: string;
-  createdAt?: string;
 };
 
-function fromDoc<T>(snap: { id: string; data: () => DocumentData }): T {
-  const data = snap.data();
-  const converted: DocumentData = {};
-  for (const [k, v] of Object.entries(data)) {
-    if (v && typeof v === "object" && "toDate" in v && typeof (v as { toDate: unknown }).toDate === "function") {
-      converted[k] = (v as { toDate: () => Date }).toDate().toISOString();
-    } else {
-      converted[k] = v;
-    }
-  }
-  return { id: snap.id, ...converted } as T;
+function toIsoDate(d: unknown): string {
+  if (d instanceof Date) return d.toISOString().slice(0, 10);
+  if (typeof d === "string") return d.slice(0, 10);
+  return "";
+}
+
+type AgendaRow = {
+  id: string;
+  title: string;
+  date: Date | string;
+  time: string;
+  duration: number;
+  type: AgendaType;
+  attendees: string[];
+  location: string;
+  notes: string;
+};
+
+function mapAgenda(r: AgendaRow): AgendaItem {
+  return {
+    id: r.id,
+    title: r.title,
+    date: toIsoDate(r.date),
+    time: r.time,
+    duration: r.duration,
+    type: r.type,
+    attendees: r.attendees ?? [],
+    location: r.location,
+    notes: r.notes,
+  };
 }
 
 export async function listAgenda(): Promise<AgendaItem[]> {
-  // Single orderBy to avoid composite index requirement; sort by time client-side.
-  const snap = await getDocs(query(collection(getDb(), "agenda"), orderBy("date", "asc")));
-  const items = snap.docs.map((d) => fromDoc<AgendaItem>(d));
-  return items.sort((a, b) => {
-    if (a.date !== b.date) return a.date.localeCompare(b.date);
-    return a.time.localeCompare(b.time);
-  });
-}
-
-export async function listAgendaInRange(startIso: string, endIso: string): Promise<AgendaItem[]> {
-  const all = await listAgenda();
-  return all.filter((a) => a.date >= startIso && a.date <= endIso);
+  const rows = (await sql`
+    SELECT id, title, date, time, duration, type, attendees, location, notes
+    FROM agenda ORDER BY date ASC, time ASC
+  `) as AgendaRow[];
+  return rows.map(mapAgenda);
 }
 
 export async function listUpcomingAgenda(limit = 4): Promise<AgendaItem[]> {
-  const all = await listAgenda();
-  const todayIso = new Date().toISOString().slice(0, 10);
-  return all.filter((a) => a.date >= todayIso).slice(0, limit);
+  const today = new Date().toISOString().slice(0, 10);
+  const rows = (await sql`
+    SELECT id, title, date, time, duration, type, attendees, location, notes
+    FROM agenda
+    WHERE date >= ${today}
+    ORDER BY date ASC, time ASC
+    LIMIT ${limit}
+  `) as AgendaRow[];
+  return rows.map(mapAgenda);
 }
 
 export type NewAgendaInput = {
@@ -73,25 +80,16 @@ export type NewAgendaInput = {
 };
 
 export async function createAgendaItem(input: NewAgendaInput): Promise<string> {
-  const ref = await addDoc(collection(getDb(), "agenda"), {
-    title: input.title.trim(),
-    date: input.date,
-    time: input.time,
-    duration: input.duration,
-    type: input.type,
-    attendees: input.attendees,
-    location: input.location?.trim() ?? "",
-    notes: input.notes?.trim() ?? "",
-    createdAt: serverTimestamp(),
-  });
-  return ref.id;
-}
-
-export async function updateAgendaItem(id: string, patch: Partial<AgendaItem>): Promise<void> {
-  const { id: _omit, ...rest } = patch;
-  await updateDoc(doc(getDb(), "agenda", id), rest);
+  const rows = (await sql`
+    INSERT INTO agenda (title, date, time, duration, type, attendees, location, notes)
+    VALUES (${input.title.trim()}, ${input.date}, ${input.time}, ${input.duration},
+            ${input.type}, ${input.attendees},
+            ${input.location?.trim() ?? ""}, ${input.notes?.trim() ?? ""})
+    RETURNING id
+  `) as { id: string }[];
+  return rows[0].id;
 }
 
 export async function deleteAgendaItem(id: string): Promise<void> {
-  await deleteDoc(doc(getDb(), "agenda", id));
+  await sql`DELETE FROM agenda WHERE id = ${id}`;
 }

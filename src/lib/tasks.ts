@@ -1,16 +1,6 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  type DocumentData,
-} from "firebase/firestore";
-import { getDb } from "@/lib/firebase";
+"use server";
+
+import { sql } from "@/lib/db";
 
 export type Priority = "low" | "medium" | "high";
 export type TaskStatus = "todo" | "in_progress" | "done";
@@ -24,27 +14,44 @@ export type Task = {
   priority: Priority;
   status: TaskStatus;
   category: string;
-  createdAt?: string;
 };
 
-function fromDoc<T>(snap: { id: string; data: () => DocumentData }): T {
-  const data = snap.data();
-  const converted: DocumentData = {};
-  for (const [k, v] of Object.entries(data)) {
-    if (v && typeof v === "object" && "toDate" in v && typeof (v as { toDate: unknown }).toDate === "function") {
-      converted[k] = (v as { toDate: () => Date }).toDate().toISOString();
-    } else {
-      converted[k] = v;
-    }
-  }
-  return { id: snap.id, ...converted } as T;
+function toIsoDate(d: unknown): string {
+  if (d instanceof Date) return d.toISOString().slice(0, 10);
+  if (typeof d === "string") return d.slice(0, 10);
+  return "";
+}
+
+type TaskRow = {
+  id: string;
+  title: string;
+  description: string;
+  assignee_id: string;
+  due_date: Date | string;
+  priority: Priority;
+  status: TaskStatus;
+  category: string;
+};
+
+function mapTask(r: TaskRow): Task {
+  return {
+    id: r.id,
+    title: r.title,
+    description: r.description,
+    assigneeId: r.assignee_id,
+    dueDate: toIsoDate(r.due_date),
+    priority: r.priority,
+    status: r.status,
+    category: r.category,
+  };
 }
 
 export async function listTasks(): Promise<Task[]> {
-  const snap = await getDocs(
-    query(collection(getDb(), "tasks"), orderBy("dueDate", "asc"))
-  );
-  return snap.docs.map((d) => fromDoc<Task>(d));
+  const rows = (await sql`
+    SELECT id, title, description, assignee_id, due_date, priority, status, category
+    FROM tasks ORDER BY due_date ASC
+  `) as TaskRow[];
+  return rows.map(mapTask);
 }
 
 export type NewTaskInput = {
@@ -57,30 +64,21 @@ export type NewTaskInput = {
 };
 
 export async function createTask(input: NewTaskInput): Promise<string> {
-  const ref = await addDoc(collection(getDb(), "tasks"), {
-    title: input.title.trim(),
-    description: input.description?.trim() ?? "",
-    assigneeId: input.assigneeId,
-    dueDate: input.dueDate,
-    priority: input.priority,
-    status: "todo" as TaskStatus,
-    category: input.category?.trim() || "Algemeen",
-    createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  const rows = (await sql`
+    INSERT INTO tasks (title, description, assignee_id, due_date, priority, category)
+    VALUES (${input.title.trim()}, ${input.description?.trim() ?? ""},
+            ${input.assigneeId}, ${input.dueDate}, ${input.priority},
+            ${input.category?.trim() || "Algemeen"})
+    RETURNING id
+  `) as { id: string }[];
+  return rows[0].id;
 }
 
 export async function updateTaskStatus(id: string, status: TaskStatus): Promise<void> {
-  await updateDoc(doc(getDb(), "tasks", id), { status });
+  await sql`UPDATE tasks SET status = ${status} WHERE id = ${id}`;
 }
 
 export async function deleteTask(id: string): Promise<void> {
-  await deleteDoc(doc(getDb(), "tasks", id));
+  await sql`DELETE FROM tasks WHERE id = ${id}`;
 }
 
-// Cycle: todo -> in_progress -> done -> todo
-export function nextStatus(s: TaskStatus): TaskStatus {
-  if (s === "todo") return "in_progress";
-  if (s === "in_progress") return "done";
-  return "todo";
-}

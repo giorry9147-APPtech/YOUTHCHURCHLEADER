@@ -1,6 +1,12 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+export function nextTaskStatus(s: "todo" | "in_progress" | "done"): "todo" | "in_progress" | "done" {
+  if (s === "todo") return "in_progress";
+  if (s === "in_progress") return "done";
+  return "todo";
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

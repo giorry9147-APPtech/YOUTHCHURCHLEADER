@@ -10,13 +10,12 @@ import { NewTaskButton } from "@/components/forms/new-task-form";
 import {
   deleteTask,
   listTasks,
-  nextStatus,
   updateTaskStatus,
   type Task,
   type TaskStatus,
 } from "@/lib/tasks";
 import { leaderById } from "@/lib/mock-data";
-import { cn, formatRelativeDays } from "@/lib/utils";
+import { cn, formatRelativeDays, nextTaskStatus } from "@/lib/utils";
 
 const columns: {
   key: TaskStatus;
@@ -60,7 +59,7 @@ export default function TakenPage() {
   }, [load]);
 
   async function handleToggle(task: Task) {
-    const next = nextStatus(task.status);
+    const next = nextTaskStatus(task.status);
     // Optimistic update
     setItems((prev) => prev?.map((t) => (t.id === task.id ? { ...t, status: next } : t)) ?? null);
     try {

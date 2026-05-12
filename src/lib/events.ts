@@ -1,19 +1,6 @@
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  increment,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-  type DocumentData,
-} from "firebase/firestore";
-import { getDb } from "@/lib/firebase";
+"use server";
+
+import { sql } from "@/lib/db";
 
 export type EventType = "service" | "social" | "study" | "outreach";
 
@@ -28,7 +15,6 @@ export type ChurchEvent = {
   signups: number;
   type: EventType;
   cover: string;
-  createdAt?: string;
 };
 
 const COVERS: Record<EventType, string> = {
@@ -38,35 +24,66 @@ const COVERS: Record<EventType, string> = {
   outreach: "#7c3aed",
 };
 
-function fromDoc<T>(snap: { id: string; data: () => DocumentData }): T {
-  const data = snap.data();
-  const converted: DocumentData = {};
-  for (const [k, v] of Object.entries(data)) {
-    if (v && typeof v === "object" && "toDate" in v && typeof (v as { toDate: unknown }).toDate === "function") {
-      converted[k] = (v as { toDate: () => Date }).toDate().toISOString();
-    } else {
-      converted[k] = v;
-    }
-  }
-  return { id: snap.id, ...converted } as T;
+function toIso(d: unknown): string {
+  if (d instanceof Date) return d.toISOString();
+  if (typeof d === "string") return d;
+  return "";
+}
+
+type EventRow = {
+  id: string;
+  title: string;
+  date: Date | string;
+  end_date: Date | string | null;
+  location: string;
+  description: string;
+  capacity: number;
+  signups: number;
+  type: EventType;
+  cover: string;
+};
+
+function mapEvent(r: EventRow): ChurchEvent {
+  return {
+    id: r.id,
+    title: r.title,
+    date: toIso(r.date),
+    endDate: r.end_date ? toIso(r.end_date) : null,
+    location: r.location,
+    description: r.description,
+    capacity: r.capacity,
+    signups: r.signups,
+    type: r.type,
+    cover: r.cover,
+  };
 }
 
 export async function listEvents(): Promise<ChurchEvent[]> {
-  const snap = await getDocs(query(collection(getDb(), "events"), orderBy("date", "asc")));
-  return snap.docs.map((d) => fromDoc<ChurchEvent>(d));
+  const rows = (await sql`
+    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover
+    FROM events ORDER BY date ASC
+  `) as EventRow[];
+  return rows.map(mapEvent);
 }
 
 export async function listUpcomingEvents(limit?: number): Promise<ChurchEvent[]> {
-  const all = await listEvents();
-  const now = Date.now();
-  const future = all.filter((e) => new Date(e.date).getTime() >= now - 86_400_000); // include today
-  return typeof limit === "number" ? future.slice(0, limit) : future;
+  const cutoff = new Date(Date.now() - 86_400_000).toISOString();
+  const rows = (await sql`
+    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover
+    FROM events
+    WHERE date >= ${cutoff}
+    ORDER BY date ASC
+    ${typeof limit === "number" ? sql`LIMIT ${limit}` : sql``}
+  `) as EventRow[];
+  return rows.map(mapEvent);
 }
 
 export async function getEvent(id: string): Promise<ChurchEvent | null> {
-  const snap = await getDoc(doc(getDb(), "events", id));
-  if (!snap.exists()) return null;
-  return fromDoc<ChurchEvent>(snap);
+  const rows = (await sql`
+    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover
+    FROM events WHERE id = ${id} LIMIT 1
+  `) as EventRow[];
+  return rows[0] ? mapEvent(rows[0]) : null;
 }
 
 export type NewEventInput = {
@@ -80,42 +97,53 @@ export type NewEventInput = {
 };
 
 export async function createEvent(input: NewEventInput): Promise<string> {
-  const ref = await addDoc(collection(getDb(), "events"), {
-    title: input.title.trim(),
-    date: input.date,
-    endDate: input.endDate || null,
-    location: input.location.trim(),
-    description: input.description?.trim() ?? "",
-    capacity: input.capacity,
-    signups: 0,
-    type: input.type,
-    cover: COVERS[input.type],
-    createdAt: serverTimestamp(),
-  });
-  return ref.id;
+  const cover = COVERS[input.type];
+  const rows = (await sql`
+    INSERT INTO events (title, date, end_date, location, description, capacity, type, cover)
+    VALUES (${input.title.trim()}, ${input.date}, ${input.endDate ?? null},
+            ${input.location.trim()}, ${input.description?.trim() ?? ""},
+            ${input.capacity}, ${input.type}, ${cover})
+    RETURNING id
+  `) as { id: string }[];
+  return rows[0].id;
 }
 
 export async function deleteEvent(id: string): Promise<void> {
-  await deleteDoc(doc(getDb(), "events", id));
+  await sql`DELETE FROM events WHERE id = ${id}`;
 }
 
 export async function updateEvent(id: string, patch: Partial<ChurchEvent>): Promise<void> {
-  const { id: _omit, ...rest } = patch;
-  await updateDoc(doc(getDb(), "events", id), rest);
+  if (patch.title !== undefined) {
+    await sql`UPDATE events SET title = ${patch.title} WHERE id = ${id}`;
+  }
+  if (patch.location !== undefined) {
+    await sql`UPDATE events SET location = ${patch.location} WHERE id = ${id}`;
+  }
+  if (patch.description !== undefined) {
+    await sql`UPDATE events SET description = ${patch.description} WHERE id = ${id}`;
+  }
+  if (patch.capacity !== undefined) {
+    await sql`UPDATE events SET capacity = ${patch.capacity} WHERE id = ${id}`;
+  }
 }
 
 // Public signup via QR — no auth, increments signups
 export async function rsvpToEvent(eventId: string, name: string): Promise<void> {
-  await addDoc(collection(getDb(), "events", eventId, "signups"), {
-    name: name.trim(),
-    createdAt: serverTimestamp(),
-  });
-  await updateDoc(doc(getDb(), "events", eventId), { signups: increment(1) });
+  await sql`
+    INSERT INTO event_signups (event_id, name)
+    VALUES (${eventId}, ${name.trim()})
+  `;
+  await sql`UPDATE events SET signups = signups + 1 WHERE id = ${eventId}`;
 }
 
-export async function listEventSignups(eventId: string): Promise<{ id: string; name: string; createdAt?: string }[]> {
-  const snap = await getDocs(
-    query(collection(getDb(), "events", eventId, "signups"), orderBy("createdAt", "desc"))
-  );
-  return snap.docs.map((d) => fromDoc<{ id: string; name: string; createdAt?: string }>(d));
+export async function listEventSignups(
+  eventId: string
+): Promise<{ id: string; name: string; createdAt: string }[]> {
+  const rows = (await sql`
+    SELECT id, name, created_at
+    FROM event_signups
+    WHERE event_id = ${eventId}
+    ORDER BY created_at DESC
+  `) as Array<{ id: string; name: string; created_at: Date | string }>;
+  return rows.map((r) => ({ id: r.id, name: r.name, createdAt: toIso(r.created_at) }));
 }

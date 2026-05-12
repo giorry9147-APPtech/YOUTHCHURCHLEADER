@@ -18,10 +18,10 @@ import {
 import { Topbar } from "@/components/topbar";
 import { Card } from "@/components/ui/card";
 import { listUpcomingEvents, type ChurchEvent } from "@/lib/events";
-import { listTasks, nextStatus, updateTaskStatus, type Task } from "@/lib/tasks";
+import { listTasks, updateTaskStatus, type Task } from "@/lib/tasks";
 import { listJongeren, type Jongere } from "@/lib/jongeren";
 import { currentUser, verseOfTheDay } from "@/lib/mock-data";
-import { cn, emojiFor, greeting } from "@/lib/utils";
+import { cn, emojiFor, greeting, nextTaskStatus } from "@/lib/utils";
 
 function formatTaskDate(dueIso: string) {
   const due = new Date(dueIso);
@@ -75,7 +75,7 @@ export default function HomePage() {
   }, [load]);
 
   async function handleToggleTask(t: Task) {
-    const next = nextStatus(t.status);
+    const next = nextTaskStatus(t.status);
     setTasks((prev) => prev?.map((x) => (x.id === t.id ? { ...x, status: next } : x)) ?? null);
     try {
       await updateTaskStatus(t.id, next);
