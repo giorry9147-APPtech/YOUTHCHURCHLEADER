@@ -41,10 +41,13 @@ function fromDoc<T>(snap: { id: string; data: () => DocumentData }): T {
 }
 
 export async function listAgenda(): Promise<AgendaItem[]> {
-  const snap = await getDocs(
-    query(collection(getDb(), "agenda"), orderBy("date", "asc"), orderBy("time", "asc"))
-  );
-  return snap.docs.map((d) => fromDoc<AgendaItem>(d));
+  // Single orderBy to avoid composite index requirement; sort by time client-side.
+  const snap = await getDocs(query(collection(getDb(), "agenda"), orderBy("date", "asc")));
+  const items = snap.docs.map((d) => fromDoc<AgendaItem>(d));
+  return items.sort((a, b) => {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return a.time.localeCompare(b.time);
+  });
 }
 
 export async function listAgendaInRange(startIso: string, endIso: string): Promise<AgendaItem[]> {

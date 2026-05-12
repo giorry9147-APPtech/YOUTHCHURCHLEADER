@@ -14,9 +14,23 @@ const firebaseConfig = {
 let app: FirebaseApp | undefined;
 let dbInstance: Firestore | undefined;
 
+export function isFirebaseConfigured(): boolean {
+  return Boolean(
+    firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.authDomain
+  );
+}
+
 export function getFirebaseApp(): FirebaseApp {
+  if (!isFirebaseConfigured()) {
+    throw new Error(
+      "Firebase is niet geconfigureerd. Check dat NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_PROJECT_ID en NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN gezet zijn (.env.local lokaal, Vercel env vars voor productie)."
+    );
+  }
   if (!app) {
     app = getApps()[0] ?? initializeApp(firebaseConfig);
+    if (typeof window !== "undefined") {
+      console.log("[Firebase] Initialized for project:", firebaseConfig.projectId);
+    }
   }
   return app;
 }
