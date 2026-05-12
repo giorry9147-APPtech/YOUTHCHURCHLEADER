@@ -10,9 +10,9 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Jongerenleider — Premium",
+  title: "Leaders in Purpose",
   description:
-    "Een premium app voor jongerenleiders: agenda, sheets, events, berichten en verjaardagen op één plek.",
+    "Een premium app voor jongerenleiders: agenda, jongeren-zorg, events, berichten en verjaardagen op één plek.",
 };
 
 export default function RootLayout({

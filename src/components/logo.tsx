@@ -71,7 +71,7 @@ export function Logo({
 export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("font-semibold tracking-tight text-foreground leading-none", className)}>
-      Rooted <span className="text-primary">Youth</span>
+      Leaders in <span className="text-primary">Purpose</span>
     </span>
   );
 }
