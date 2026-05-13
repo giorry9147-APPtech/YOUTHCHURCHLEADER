@@ -3,7 +3,7 @@
 import { Bell } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Logo, Wordmark } from "@/components/logo";
-import { currentUser } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 
 export function Topbar({
   title,
@@ -14,6 +14,7 @@ export function Topbar({
   subtitle?: string;
   hideBranding?: boolean;
 }) {
+  const currentUser = useCurrentUser();
   return (
     <header className="sticky top-0 z-30 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75 border-b border-border lg:border-b-0">
       <div className="flex items-center gap-3 h-16 px-4 md:px-8">
@@ -46,7 +47,12 @@ export function Topbar({
           <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />
         </button>
 
-        <Avatar name={currentUser.name} color={currentUser.color} size={40} />
+        <Avatar
+          name={currentUser.name || "U"}
+          color={currentUser.color}
+          imageUrl={currentUser.image}
+          size={40}
+        />
       </div>
 
       {/* Mobile-only page title row (below brand) */}

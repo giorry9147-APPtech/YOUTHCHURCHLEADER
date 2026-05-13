@@ -14,9 +14,11 @@ import {
   togglePinMessage,
   type Message,
 } from "@/lib/messages";
-import { currentUser, leaderById } from "@/lib/mock-data";
+import { leaderById } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 
 export default function BerichtenPage() {
+  const currentUser = useCurrentUser();
   const [items, setItems] = useState<Message[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState("");

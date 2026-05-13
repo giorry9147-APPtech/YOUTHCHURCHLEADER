@@ -16,7 +16,8 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { createTask, type Priority } from "@/lib/tasks";
-import { leaders, currentUser } from "@/lib/mock-data";
+import { leaders } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
 
 const priorities: { value: Priority; label: string }[] = [
@@ -38,6 +39,7 @@ export function NewTaskButton({
   triggerLabel?: string;
   size?: "sm" | "md";
 }) {
+  const currentUser = useCurrentUser();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

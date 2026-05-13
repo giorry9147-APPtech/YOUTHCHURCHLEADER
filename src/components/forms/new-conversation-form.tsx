@@ -15,7 +15,7 @@ import {
 import { Input, Label, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createConversation, type Mood } from "@/lib/jongeren";
-import { currentUser } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn } from "@/lib/utils";
 
 const moods: { value: Mood; label: string; emoji: string }[] = [
@@ -34,6 +34,7 @@ export function NewConversationButton({
   onCreated?: () => void;
   size?: "sm" | "md";
 }) {
+  const currentUser = useCurrentUser();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

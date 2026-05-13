@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Logo, Wordmark } from "@/components/logo";
-import { currentUser } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
@@ -30,6 +30,7 @@ const items = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const currentUser = useCurrentUser();
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border bg-card">
@@ -80,9 +81,14 @@ export function Sidebar() {
 
       <div className="p-3 border-t border-border">
         <div className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted transition-colors cursor-pointer">
-          <Avatar name={currentUser.name} color={currentUser.color} size={36} />
+          <Avatar
+            name={currentUser.name || "U"}
+            color={currentUser.color}
+            imageUrl={currentUser.image}
+            size={36}
+          />
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-medium truncate">{currentUser.name}</div>
+            <div className="text-sm font-medium truncate">{currentUser.name || "Laden…"}</div>
             <div className="text-xs text-muted-foreground truncate">{currentUser.role}</div>
           </div>
         </div>

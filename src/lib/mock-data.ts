@@ -81,22 +81,25 @@ export type Message = {
   pinned?: boolean;
 };
 
-export const currentUser: Leader = {
-  id: "l1",
-  name: "Giorgio Simson",
-  role: "Hoofdleider",
-  email: "giorgioasimson@gmail.com",
-  initials: "GS",
-  color: "#7c3aed",
-};
-
+/**
+ * Static leader metadata for display purposes (avatars in feeds, dropdowns, etc.).
+ * The real authoritative source for users/auth is the `users` table.
+ * Keep this in sync with the users seeded by scripts/seed-users.mjs.
+ */
 export const leaders: Leader[] = [
-  currentUser,
+  {
+    id: "l1",
+    name: "Giorgio Simson",
+    role: "Hoofdleider",
+    email: "giorgio@youthchurchleader.nl",
+    initials: "GS",
+    color: "#7c3aed",
+  },
   {
     id: "l2",
     name: "Jeliy Gomes",
     role: "Leider",
-    email: "jeliy@kerk.nl",
+    email: "jeliy@youthchurchleader.nl",
     initials: "JG",
     color: "#a855f7",
   },
@@ -104,11 +107,15 @@ export const leaders: Leader[] = [
     id: "l3",
     name: "Tersio Demming",
     role: "Leider",
-    email: "tersio@kerk.nl",
+    email: "tersio@youthchurchleader.nl",
     initials: "TD",
     color: "#c026d3",
   },
 ];
+
+// Legacy export: only used as a "loading state" placeholder.
+// All authenticated components use `useCurrentUser()` from `@/lib/use-current-user`.
+export const currentUser: Leader = leaders[0];
 
 const palette = ["#1c1917", "#b45309", "#15803d", "#7c3aed", "#0e7490", "#be123c", "#a16207", "#4338ca"];
 

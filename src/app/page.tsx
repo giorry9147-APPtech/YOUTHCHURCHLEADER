@@ -21,7 +21,8 @@ import { Card } from "@/components/ui/card";
 import { listUpcomingEvents, type ChurchEvent } from "@/lib/events";
 import { listTasks, updateTaskStatus, type Task } from "@/lib/tasks";
 import { listJongeren, type Jongere } from "@/lib/jongeren";
-import { currentUser, verseOfTheDay } from "@/lib/mock-data";
+import { verseOfTheDay } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn, emojiFor, greeting, nextTaskStatus } from "@/lib/utils";
 
 function formatTaskDate(dueIso: string) {
@@ -46,6 +47,7 @@ const priorityClass = {
 } as const;
 
 export default function HomePage() {
+  const currentUser = useCurrentUser();
   const [events, setEvents] = useState<ChurchEvent[] | null>(null);
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [jongeren, setJongeren] = useState<Jongere[] | null>(null);
@@ -89,7 +91,7 @@ export default function HomePage() {
   const today = new Date();
   const verse = verseOfTheDay(today);
   const greet = greeting(today);
-  const firstName = currentUser.name.split(" ")[0];
+  const firstName = currentUser.name?.split(" ")[0] || "";
 
   const visibleTasks = (tasks ?? []).slice(0, 5);
   const openTasks = tasks?.filter((t) => t.status !== "done").length ?? 0;
@@ -127,7 +129,7 @@ export default function HomePage() {
           <div className="relative p-5 lg:p-7 flex flex-col lg:flex-row gap-5 lg:gap-8 lg:items-center">
             <div className="lg:flex-1 min-w-0">
               <h2 className="text-2xl lg:text-3xl font-semibold tracking-tight text-balance">
-                {greet}, {firstName}! {emojiFor(greet)}
+                {greet}{firstName ? `, ${firstName}` : ""}! {emojiFor(greet)}
               </h2>
               <p className="text-white/80 text-sm lg:text-base mt-1.5">
                 Hier is wat er vandaag speelt.

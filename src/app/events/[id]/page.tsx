@@ -42,7 +42,8 @@ import {
   updateTaskStatus,
   type Task,
 } from "@/lib/tasks";
-import { currentUser, leaderById } from "@/lib/mock-data";
+import { leaderById } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn, formatRelativeDays, nextTaskStatus } from "@/lib/utils";
 
 const typeLabel: Record<string, string> = {
@@ -63,6 +64,7 @@ export default function EventDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params.id;
+  const currentUser = useCurrentUser();
 
   const [ev, setEv] = useState<ChurchEvent | null | undefined>(undefined);
   const [signups, setSignups] = useState<{ id: string; name: string }[]>([]);

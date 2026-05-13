@@ -25,7 +25,8 @@ import {
   type Task,
   type TaskStatus,
 } from "@/lib/tasks";
-import { currentUser, leaderById } from "@/lib/mock-data";
+import { leaderById } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 import { cn, formatRelativeDays, nextTaskStatus } from "@/lib/utils";
 
 type Filter = "all" | "mine" | "open";
@@ -44,6 +45,7 @@ const priorityVariant = {
 const priorityLabel = { high: "Hoog", medium: "Normaal", low: "Laag" };
 
 export default function TakenPage() {
+  const currentUser = useCurrentUser();
   const [items, setItems] = useState<Task[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");

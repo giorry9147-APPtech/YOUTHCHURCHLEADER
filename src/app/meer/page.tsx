@@ -1,20 +1,26 @@
+"use client";
+
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import {
   Bell,
   ChevronRight,
   Gift,
+  Lock,
   LogOut,
   MessageSquare,
   Settings,
   ShieldCheck,
   Sparkles,
   Ticket,
+  User,
   UserCheck,
 } from "lucide-react";
 import { Topbar } from "@/components/topbar";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
-import { currentUser, leaders } from "@/lib/mock-data";
+import { leaders } from "@/lib/mock-data";
+import { useCurrentUser } from "@/lib/use-current-user";
 
 const sections: {
   title: string;
@@ -30,6 +36,12 @@ const sections: {
     ],
   },
   {
+    title: "Account",
+    items: [
+      { href: "/profiel", label: "Mijn profiel", icon: User, hint: "Naam, foto, wachtwoord" },
+    ],
+  },
+  {
     title: "Instellingen",
     items: [
       { href: "/meer/notificaties", label: "Meldingen", icon: Bell },
@@ -40,6 +52,7 @@ const sections: {
 ];
 
 export default function MeerPage() {
+  const currentUser = useCurrentUser();
   return (
     <>
       <Topbar title="Meer" subtitle="Alle modules en instellingen" />
@@ -139,7 +152,10 @@ export default function MeerPage() {
         </Card>
 
         {/* Logout */}
-        <button className="w-full text-sm font-medium text-danger flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-danger-soft transition-colors">
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full text-sm font-medium text-danger flex items-center justify-center gap-2 py-3 rounded-xl border border-border bg-card hover:bg-danger-soft transition-colors"
+        >
           <LogOut className="h-4 w-4" />
           Uitloggen
         </button>

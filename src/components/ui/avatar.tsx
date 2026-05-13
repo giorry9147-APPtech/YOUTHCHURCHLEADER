@@ -1,16 +1,40 @@
+import Image from "next/image";
 import { cn, initials } from "@/lib/utils";
 
 export function Avatar({
   name,
   color,
+  imageUrl,
   size = 40,
   className,
 }: {
   name: string;
   color?: string;
+  imageUrl?: string | null;
   size?: number;
   className?: string;
 }) {
+  if (imageUrl) {
+    return (
+      <div
+        className={cn(
+          "relative inline-block rounded-full overflow-hidden bg-muted shrink-0",
+          className
+        )}
+        style={{ width: size, height: size }}
+        aria-label={name}
+      >
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          sizes={`${size}px`}
+          className="object-cover"
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -20,7 +44,7 @@ export function Avatar({
       style={{
         width: size,
         height: size,
-        backgroundColor: color ?? "#1c1917",
+        backgroundColor: color ?? "#7c3aed",
         fontSize: size * 0.38,
       }}
       aria-hidden
@@ -35,7 +59,7 @@ export function AvatarStack({
   max = 3,
   size = 28,
 }: {
-  items: { name: string; color?: string }[];
+  items: { name: string; color?: string; imageUrl?: string | null }[];
   max?: number;
   size?: number;
 }) {
@@ -49,7 +73,7 @@ export function AvatarStack({
           className="ring-2 ring-card rounded-full"
           style={{ zIndex: visible.length - i }}
         >
-          <Avatar name={it.name} color={it.color} size={size} />
+          <Avatar name={it.name} color={it.color} imageUrl={it.imageUrl} size={size} />
         </div>
       ))}
       {overflow > 0 && (
