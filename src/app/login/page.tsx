@@ -67,9 +67,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* LEFT: hero gradient panel (desktop) / top banner (mobile) */}
-      <aside className="bg-hero-gradient text-white relative overflow-hidden lg:flex-1 lg:flex lg:flex-col lg:p-12 lg:min-h-screen w-full lg:w-auto px-6 pt-8 pb-16 lg:pb-12 lg:px-12">
+    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+      {/* TOP on mobile / LEFT on desktop: gradient hero panel */}
+      <aside className="bg-hero-gradient text-white relative overflow-hidden flex flex-col w-full px-6 pt-8 pb-20 lg:flex-1 lg:p-12 lg:pb-12 lg:min-h-screen">
         {/* Decorative pattern */}
         <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:22px_22px]" />
 
@@ -136,10 +136,10 @@ function LoginForm() {
         </div>
       </aside>
 
-      {/* RIGHT: form panel */}
-      <main className="lg:w-[480px] xl:w-[520px] lg:flex lg:items-center lg:justify-center lg:min-h-screen bg-background relative -mt-10 lg:mt-0">
+      {/* BOTTOM on mobile / RIGHT on desktop: form panel */}
+      <main className="w-full lg:w-[480px] xl:w-[520px] bg-background flex items-start lg:items-center justify-center lg:min-h-screen relative -mt-12 lg:mt-0 pb-10 lg:pb-0">
         {/* Mobile: form floats over hero with rounded top */}
-        <div className="bg-card lg:bg-transparent rounded-t-[2rem] lg:rounded-none px-6 lg:px-10 py-8 lg:py-0 shadow-2xl shadow-foreground/5 lg:shadow-none w-full max-w-md mx-auto">
+        <div className="bg-card lg:bg-transparent rounded-t-[2rem] lg:rounded-none px-6 lg:px-10 pt-8 pb-8 lg:py-0 shadow-2xl shadow-foreground/10 lg:shadow-none w-full max-w-md mx-auto">
           <div className="lg:max-w-sm lg:mx-auto">
             <div className="hidden lg:block mb-8">
               <h2 className="text-2xl font-semibold tracking-tight">Inloggen</h2>
