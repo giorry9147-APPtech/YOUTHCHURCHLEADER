@@ -100,8 +100,12 @@ export function NewEventButton({
       return;
     }
 
-    const startIso = `${date}T${time}:00`;
-    const endIso = endTime ? `${date}T${endTime}:00` : undefined;
+    // Treat the date+time the user typed as their local timezone (Amsterdam).
+    // new Date(...) parses naive ISO strings as local; .toISOString() converts to UTC.
+    const startIso = new Date(`${date}T${time}:00`).toISOString();
+    const endIso = endTime
+      ? new Date(`${date}T${endTime}:00`).toISOString()
+      : undefined;
 
     try {
       const id = await createEvent({
