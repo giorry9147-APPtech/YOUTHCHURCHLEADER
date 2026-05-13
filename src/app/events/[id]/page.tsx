@@ -537,6 +537,7 @@ function EventTaskRow({
   onToggleStatus: (t: Task) => void;
   onDelete: (t: Task) => void;
 }) {
+  const currentUser = useCurrentUser();
   const isDone = task.status === "done";
   const inProgress = task.status === "in_progress";
   const assignee = task.assigneeId ? leaderById(task.assigneeId) : null;

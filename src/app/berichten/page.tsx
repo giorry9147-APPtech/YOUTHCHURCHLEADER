@@ -202,6 +202,7 @@ function MessageCard({
   onTogglePin: (m: Message) => void;
   onDelete: (m: Message) => void;
 }) {
+  const currentUser = useCurrentUser();
   const author = leaderById(m.authorId);
   const created = m.createdAt ? new Date(m.createdAt) : null;
   const isOwn = m.authorId === currentUser.id;
