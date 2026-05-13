@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Sparkles,
   Ticket,
+  UserCheck,
 } from "lucide-react";
 import { Topbar } from "@/components/topbar";
 import { Card } from "@/components/ui/card";
@@ -22,8 +23,9 @@ const sections: {
   {
     title: "Modules",
     items: [
-      { href: "/berichten", label: "Berichten", icon: MessageSquare, hint: "Team feed" },
       { href: "/events", label: "Events", icon: Ticket, hint: "Diensten & activiteiten" },
+      { href: "/aanwezigheid", label: "Aanwezigheid", icon: UserCheck, hint: "Track record per jongere" },
+      { href: "/berichten", label: "Berichten", icon: MessageSquare, hint: "Team feed" },
       { href: "/verjaardagen", label: "Verjaardagen", icon: Gift, hint: "Niemand vergeten" },
     ],
   },

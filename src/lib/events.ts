@@ -15,6 +15,7 @@ export type ChurchEvent = {
   signups: number;
   type: EventType;
   cover: string;
+  coverImage: string | null;
 };
 
 const COVERS: Record<EventType, string> = {
@@ -41,6 +42,7 @@ type EventRow = {
   signups: number;
   type: EventType;
   cover: string;
+  cover_image: string | null;
 };
 
 function mapEvent(r: EventRow): ChurchEvent {
@@ -55,12 +57,13 @@ function mapEvent(r: EventRow): ChurchEvent {
     signups: r.signups,
     type: r.type,
     cover: r.cover,
+    coverImage: r.cover_image,
   };
 }
 
 export async function listEvents(): Promise<ChurchEvent[]> {
   const rows = (await sql`
-    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover
+    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover, cover_image
     FROM events ORDER BY date ASC
   `) as EventRow[];
   return rows.map(mapEvent);
@@ -69,7 +72,7 @@ export async function listEvents(): Promise<ChurchEvent[]> {
 export async function listUpcomingEvents(limit?: number): Promise<ChurchEvent[]> {
   const cutoff = new Date(Date.now() - 86_400_000).toISOString();
   const rows = (await sql`
-    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover
+    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover, cover_image
     FROM events
     WHERE date >= ${cutoff}
     ORDER BY date ASC
@@ -80,7 +83,7 @@ export async function listUpcomingEvents(limit?: number): Promise<ChurchEvent[]>
 
 export async function getEvent(id: string): Promise<ChurchEvent | null> {
   const rows = (await sql`
-    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover
+    SELECT id, title, date, end_date, location, description, capacity, signups, type, cover, cover_image
     FROM events WHERE id = ${id} LIMIT 1
   `) as EventRow[];
   return rows[0] ? mapEvent(rows[0]) : null;
@@ -94,15 +97,16 @@ export type NewEventInput = {
   description?: string;
   capacity: number;
   type: EventType;
+  coverImage?: string;
 };
 
 export async function createEvent(input: NewEventInput): Promise<string> {
   const cover = COVERS[input.type];
   const rows = (await sql`
-    INSERT INTO events (title, date, end_date, location, description, capacity, type, cover)
+    INSERT INTO events (title, date, end_date, location, description, capacity, type, cover, cover_image)
     VALUES (${input.title.trim()}, ${input.date}, ${input.endDate ?? null},
             ${input.location.trim()}, ${input.description?.trim() ?? ""},
-            ${input.capacity}, ${input.type}, ${cover})
+            ${input.capacity}, ${input.type}, ${cover}, ${input.coverImage ?? null})
     RETURNING id
   `) as { id: string }[];
   return rows[0].id;

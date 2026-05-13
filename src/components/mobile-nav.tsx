@@ -13,7 +13,7 @@ const items = [
   { href: "/meer", label: "Meer", icon: Menu },
 ];
 
-const moreRoutes = ["/meer", "/berichten", "/events", "/verjaardagen"];
+const moreRoutes = ["/meer", "/berichten", "/events", "/verjaardagen", "/aanwezigheid"];
 
 export function MobileNav() {
   const pathname = usePathname();

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import Image from "next/image";
+import { ImagePlus, Plus, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
@@ -16,6 +17,7 @@ import { Input, Label, Textarea } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { createEvent, type EventType } from "@/lib/events";
+import { uploadEventCover } from "@/lib/blob";
 import { cn } from "@/lib/utils";
 
 const typeOptions: { value: EventType; label: string; emoji: string }[] = [
@@ -27,15 +29,50 @@ const typeOptions: { value: EventType; label: string; emoji: string }[] = [
 
 export function NewEventButton({
   onCreated,
-  variant = "primary",
 }: {
   onCreated?: (id: string) => void;
-  variant?: "primary" | "secondary";
 }) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [type, setType] = useState<EventType>("service");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      setError("Bestand is te groot (max 8 MB).");
+      return;
+    }
+    setError(null);
+
+    setPreviewUrl(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      const url = await uploadEventCover(fd);
+      setCoverUrl(url);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Upload mislukt");
+      setPreviewUrl(null);
+      setCoverUrl(null);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function clearPhoto() {
+    setPreviewUrl(null);
+    setCoverUrl(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -75,9 +112,12 @@ export function NewEventButton({
         description,
         capacity,
         type,
+        coverImage: coverUrl ?? undefined,
       });
       setOpen(false);
       setType("service");
+      setPreviewUrl(null);
+      setCoverUrl(null);
       onCreated?.(id);
     } catch (err) {
       setError(
@@ -93,7 +133,7 @@ export function NewEventButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={variant === "primary" ? "primary" : "secondary"}>
+        <Button>
           <Plus className="h-4 w-4" />
           Nieuw event
         </Button>
@@ -102,16 +142,59 @@ export function NewEventButton({
         <DialogHeader>
           <DialogTitle>Nieuw event aanmaken</DialogTitle>
           <DialogDescription>
-            Maak een jongerendienst, bijbelstudie, sociale avond of outreach. Jongeren kunnen zich aanmelden via QR.
+            Maak een jongerendienst, bijbelstudie, sociale avond of outreach.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Photo */}
+          <div>
+            <Label htmlFor="file">Cover foto</Label>
+            {previewUrl ? (
+              <div className="relative h-40 rounded-2xl overflow-hidden border border-border bg-muted">
+                <Image src={previewUrl} alt="Cover preview" fill sizes="500px" className="object-cover" />
+                {uploading && (
+                  <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center text-white text-sm font-medium">
+                    Bezig met uploaden…
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={clearPhoto}
+                  disabled={uploading}
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-foreground/70 text-white inline-flex items-center justify-center hover:bg-foreground transition-colors"
+                  aria-label="Verwijder foto"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <label
+                htmlFor="file"
+                className="flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed border-border bg-subtle hover:border-primary hover:bg-primary-soft/30 transition-colors cursor-pointer text-center px-4"
+              >
+                <ImagePlus className="h-6 w-6 text-primary mb-1.5" />
+                <span className="text-sm font-medium">Foto kiezen</span>
+                <span className="text-xs text-muted-foreground mt-0.5">
+                  JPG/PNG, max 8 MB — anders gradient placeholder
+                </span>
+              </label>
+            )}
+            <input
+              ref={fileRef}
+              id="file"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handleFileSelect}
+            />
+          </div>
+
           <div>
             <Label htmlFor="title" required>
               Titel
             </Label>
-            <Input id="title" name="title" placeholder="Bv. Vrijdag Jeugdavond" autoFocus required />
+            <Input id="title" name="title" placeholder="Bv. Vrijdag Jeugdavond" required />
           </div>
 
           <div>
@@ -188,12 +271,12 @@ export function NewEventButton({
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="ghost" disabled={submitting}>
+              <Button type="button" variant="ghost" disabled={submitting || uploading}>
                 Annuleren
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Bezig…" : "Event aanmaken"}
+            <Button type="submit" disabled={submitting || uploading}>
+              {submitting ? "Bezig…" : uploading ? "Wacht op upload…" : "Event aanmaken"}
             </Button>
           </DialogFooter>
         </form>

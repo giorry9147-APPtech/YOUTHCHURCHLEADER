@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Cake,
   Calendar,
@@ -200,20 +201,36 @@ export default function HomePage() {
                     >
                       <div
                         className="relative h-16 w-16 lg:h-20 lg:w-20 rounded-2xl shrink-0 overflow-hidden"
-                        style={{
-                          backgroundColor: ev.cover,
-                          backgroundImage:
-                            "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.30) 100%)",
-                        }}
+                        style={
+                          ev.coverImage
+                            ? undefined
+                            : {
+                                backgroundColor: ev.cover,
+                                backgroundImage:
+                                  "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.30) 100%)",
+                              }
+                        }
                       >
-                        <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_30%_70%,white_1px,transparent_2px)] [background-size:6px_6px]" />
-                        <svg
-                          className="absolute inset-0 m-auto h-7 w-7 opacity-70 text-white"
-                          viewBox="0 0 100 100"
-                          aria-hidden
-                        >
-                          <path d="M45 15 L55 15 L55 45 L85 45 L85 55 L55 55 L55 95 L45 95 L45 55 L15 55 L15 45 L45 45 Z" fill="currentColor" />
-                        </svg>
+                        {ev.coverImage ? (
+                          <Image
+                            src={ev.coverImage}
+                            alt={ev.title}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <>
+                            <div className="absolute inset-0 opacity-25 [background-image:radial-gradient(circle_at_30%_70%,white_1px,transparent_2px)] [background-size:6px_6px]" />
+                            <svg
+                              className="absolute inset-0 m-auto h-7 w-7 opacity-70 text-white"
+                              viewBox="0 0 100 100"
+                              aria-hidden
+                            >
+                              <path d="M45 15 L55 15 L55 45 L85 45 L85 55 L55 55 L55 95 L45 95 L45 55 L15 55 L15 45 L45 45 Z" fill="currentColor" />
+                            </svg>
+                          </>
+                        )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="inline-flex items-center rounded-full bg-primary-soft text-primary px-2.5 py-0.5 text-[11px] font-semibold mb-1.5">

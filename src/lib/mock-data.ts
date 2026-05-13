@@ -83,30 +83,30 @@ export type Message = {
 
 export const currentUser: Leader = {
   id: "l1",
-  name: "Giorgio Asimson",
+  name: "Giorgio Simson",
   role: "Hoofdleider",
   email: "giorgioasimson@gmail.com",
-  initials: "GA",
-  color: "#1c1917",
+  initials: "GS",
+  color: "#7c3aed",
 };
 
 export const leaders: Leader[] = [
   currentUser,
   {
     id: "l2",
-    name: "Mirjam de Vries",
+    name: "Jeliy Gomes",
     role: "Leider",
-    email: "mirjam@kerk.nl",
-    initials: "MV",
-    color: "#b45309",
+    email: "jeliy@kerk.nl",
+    initials: "JG",
+    color: "#a855f7",
   },
   {
     id: "l3",
-    name: "Daniel van Veen",
+    name: "Tersio Demming",
     role: "Leider",
-    email: "daniel@kerk.nl",
-    initials: "DV",
-    color: "#15803d",
+    email: "tersio@kerk.nl",
+    initials: "TD",
+    color: "#c026d3",
   },
 ];
 

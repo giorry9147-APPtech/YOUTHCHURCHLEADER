@@ -25,11 +25,24 @@ const priorities: { value: Priority; label: string }[] = [
   { value: "high", label: "Hoog" },
 ];
 
-export function NewTaskButton({ onCreated }: { onCreated?: () => void }) {
+type Mode = "assign" | "open";
+
+export function NewTaskButton({
+  onCreated,
+  eventId,
+  triggerLabel = "Nieuwe taak",
+  size = "md",
+}: {
+  onCreated?: () => void;
+  eventId?: string;
+  triggerLabel?: string;
+  size?: "sm" | "md";
+}) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [priority, setPriority] = useState<Priority>("medium");
+  const [mode, setMode] = useState<Mode>("assign");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -58,13 +71,16 @@ export function NewTaskButton({ onCreated }: { onCreated?: () => void }) {
       await createTask({
         title,
         description,
-        assigneeId: assigneeId || currentUser.id,
+        assigneeId: mode === "assign" ? assigneeId || currentUser.id : null,
         dueDate,
         priority,
         category,
+        eventId: eventId ?? null,
+        isOpen: mode === "open",
       });
       setOpen(false);
       setPriority("medium");
+      setMode("assign");
       onCreated?.();
     } catch (err) {
       setError(
@@ -80,16 +96,20 @@ export function NewTaskButton({ onCreated }: { onCreated?: () => void }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size={size}>
           <Plus className="h-4 w-4" />
-          Nieuwe taak
+          {triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Nieuwe taak aanmaken</DialogTitle>
+          <DialogTitle>
+            {eventId ? "Event-taak toevoegen" : "Nieuwe taak"}
+          </DialogTitle>
           <DialogDescription>
-            Wijs een taak toe aan jou of een collega-leider met een deadline.
+            {mode === "assign"
+              ? "Wijs de taak toe aan een specifieke leider."
+              : "Open voor iedereen — wie wil mag hem oppakken."}
           </DialogDescription>
         </DialogHeader>
 
@@ -101,24 +121,50 @@ export function NewTaskButton({ onCreated }: { onCreated?: () => void }) {
             <Input
               id="title"
               name="title"
-              placeholder="Bv. Preek voorbereiden — Vrijheid"
+              placeholder="Bv. Snacks bestellen voor vrijdag"
               autoFocus
               required
             />
           </div>
 
+          {/* Mode toggle */}
           <div>
-            <Label htmlFor="description" hint="optioneel">
-              Toelichting
-            </Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Extra info over de taak"
-            />
+            <Label htmlFor="mode">Toewijzing</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setMode("assign")}
+                className={cn(
+                  "rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors text-left",
+                  mode === "assign"
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-border bg-card hover:border-primary/40"
+                )}
+              >
+                <div>Wijs toe</div>
+                <div className="text-xs font-normal text-muted-foreground mt-0.5">
+                  Aan een specifieke leider
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("open")}
+                className={cn(
+                  "rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors text-left",
+                  mode === "open"
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "border-border bg-card hover:border-primary/40"
+                )}
+              >
+                <div>Open voor iedereen</div>
+                <div className="text-xs font-normal text-muted-foreground mt-0.5">
+                  Wie wil mag oppakken
+                </div>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          {mode === "assign" && (
             <div>
               <Label htmlFor="assigneeId">Wie</Label>
               <Select id="assigneeId" name="assigneeId" defaultValue={currentUser.id}>
@@ -129,18 +175,26 @@ export function NewTaskButton({ onCreated }: { onCreated?: () => void }) {
                 ))}
               </Select>
             </div>
-            <div>
-              <Label htmlFor="dueDate" required>
-                Deadline
-              </Label>
-              <Input
-                id="dueDate"
-                name="dueDate"
-                type="date"
-                defaultValue={new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)}
-                required
-              />
-            </div>
+          )}
+
+          <div>
+            <Label htmlFor="description" hint="optioneel">
+              Toelichting
+            </Label>
+            <Textarea id="description" name="description" placeholder="Extra info" />
+          </div>
+
+          <div>
+            <Label htmlFor="dueDate" required>
+              Deadline
+            </Label>
+            <Input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              defaultValue={new Date(Date.now() + 7 * 86_400_000).toISOString().slice(0, 10)}
+              required
+            />
           </div>
 
           <div>
@@ -164,16 +218,14 @@ export function NewTaskButton({ onCreated }: { onCreated?: () => void }) {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="category" hint="optioneel">
-              Categorie
-            </Label>
-            <Input
-              id="category"
-              name="category"
-              placeholder="Bv. Jongerendienst, Outreach, Administratie"
-            />
-          </div>
+          {!eventId && (
+            <div>
+              <Label htmlFor="category" hint="optioneel">
+                Categorie
+              </Label>
+              <Input id="category" name="category" placeholder="Bv. Jongerendienst, Outreach" />
+            </div>
+          )}
 
           {error && (
             <div className="rounded-xl bg-danger-soft border border-danger/20 text-danger text-sm p-3">

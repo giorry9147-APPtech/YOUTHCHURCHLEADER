@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Calendar, CheckCircle2, Loader2, MapPin, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,15 +95,29 @@ export default function EventSignupPage() {
             <Card className="overflow-hidden border-0 shadow-lg shadow-primary/10">
               <div
                 className="h-40 relative"
-                style={{
-                  backgroundColor: ev.cover,
-                  backgroundImage:
-                    "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.30) 100%)",
-                }}
+                style={
+                  ev.coverImage
+                    ? undefined
+                    : {
+                        backgroundColor: ev.cover,
+                        backgroundImage:
+                          "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.30) 100%)",
+                      }
+                }
               >
-                <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:14px_14px]" />
-                <div className="absolute bottom-4 left-4 right-4 text-white space-y-1.5">
-                  <Badge variant="muted" className="bg-white/15 backdrop-blur text-white border-0">
+                {ev.coverImage && (
+                  <Image
+                    src={ev.coverImage}
+                    alt={ev.title}
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 100vw, 600px"
+                    className="object-cover"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50" />
+                <div className="absolute bottom-4 left-4 right-4 text-white space-y-1.5 drop-shadow">
+                  <Badge variant="muted" className="bg-white/20 backdrop-blur text-white border-0">
                     {typeLabel[ev.type] ?? ev.type}
                   </Badge>
                   <h1 className="text-xl md:text-2xl font-semibold tracking-tight">{ev.title}</h1>

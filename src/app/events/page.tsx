@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Loader2, MapPin, QrCode, Ticket, Users } from "lucide-react";
 import { Topbar } from "@/components/topbar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -126,26 +127,43 @@ function EventCard({ ev }: { ev: ChurchEvent }) {
     <Card className="overflow-hidden group">
       <div
         className="h-40 relative"
-        style={{
-          backgroundColor: ev.cover,
-          backgroundImage:
-            "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.30) 100%)",
-        }}
+        style={
+          ev.coverImage
+            ? undefined
+            : {
+                backgroundColor: ev.cover,
+                backgroundImage:
+                  "linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(0,0,0,0.30) 100%)",
+              }
+        }
       >
-        <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:14px_14px]" />
+        {ev.coverImage && (
+          <Image
+            src={ev.coverImage}
+            alt={ev.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
+            priority={false}
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50" />
+        {!ev.coverImage && (
+          <div className="absolute inset-0 opacity-10 [background-image:radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] [background-size:14px_14px]" />
+        )}
         <div className="absolute top-4 left-4">
-          <Badge variant="muted" className="bg-white/15 backdrop-blur text-white border-0">
+          <Badge variant="muted" className="bg-white/20 backdrop-blur text-white border-0">
             {typeLabel[ev.type] ?? ev.type}
           </Badge>
         </div>
-        <div className="absolute bottom-4 left-4 text-white">
-          <div className="text-[10px] uppercase tracking-wider opacity-80">
+        <div className="absolute bottom-4 left-4 text-white drop-shadow">
+          <div className="text-[10px] uppercase tracking-wider opacity-90">
             {date.toLocaleDateString("nl-NL", { weekday: "long" })}
           </div>
           <div className="text-2xl font-semibold leading-tight">
             {date.toLocaleDateString("nl-NL", { day: "numeric", month: "long" })}
           </div>
-          <div className="text-sm opacity-90 mt-0.5">
+          <div className="text-sm opacity-95 mt-0.5">
             {date.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })} uur
           </div>
         </div>

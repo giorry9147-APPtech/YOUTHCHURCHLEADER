@@ -9,6 +9,7 @@ import {
   Home,
   MessageSquare,
   Ticket,
+  UserCheck,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -21,8 +22,9 @@ const items = [
   { href: "/agenda", label: "Agenda", icon: CalendarDays },
   { href: "/taken", label: "Taken", icon: ClipboardCheck },
   { href: "/sheets", label: "Jongeren", icon: Users, lock: true },
-  { href: "/berichten", label: "Berichten", icon: MessageSquare },
   { href: "/events", label: "Events", icon: Ticket },
+  { href: "/aanwezigheid", label: "Aanwezigheid", icon: UserCheck },
+  { href: "/berichten", label: "Berichten", icon: MessageSquare },
   { href: "/verjaardagen", label: "Verjaardagen", icon: Gift },
 ];
 
